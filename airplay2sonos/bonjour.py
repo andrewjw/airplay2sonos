@@ -14,7 +14,13 @@
 import select
 import pybonjour
 import logging
-import appletv
+
+DEVICE_INFO = {
+    'deviceid' : 'FF:FF:FF:FF:FF:FF',
+    'features' : '0x77',
+    'model' : 'AppleTV2,1',
+    'srcvers' : '101.10'
+}
 
 def register_service(name, regtype, port):
     def register_callback(sdRef, flags, errorCode, name, regtype, domain):
@@ -22,7 +28,7 @@ def register_service(name, regtype, port):
         if errorCode == pybonjour.kDNSServiceErr_NoError:
             print "Bonjour registration complete! %s.%s" % (name, regtype)
 
-    record = pybonjour.TXTRecord(appletv.DEVICE_INFO)
+    record = pybonjour.TXTRecord(DEVICE_INFO)
 
     service = pybonjour.DNSServiceRegister(name = name,
                                          regtype = regtype,

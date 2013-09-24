@@ -15,10 +15,7 @@ import base64
 import BaseHTTPServer
 import logging
 
-import appletv
 from apple_challenge import apple_challenge
-
-import biplist
 
 log = logging.getLogger('airplayer')
 

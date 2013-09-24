@@ -4,6 +4,14 @@ by Andrew Wilkinson <andrewjwilkinson@gmail.com>
 
 Licensed under the terms of the GNU GPL 2.0. See LICENSE for more details.
 
+** WARNING **
+
+This program is not currently functional, but is under active development.
+
+Requirements:
+    M2Crypto
+    PyBonjour
+
 This program draws heavily on the following two pieces of software:
 
     Airplayer
