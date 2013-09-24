@@ -1,0 +1,10 @@
+airplay2sonos 0.1
+
+by Andrew Wilkinson <andrewjwilkinson@gmail.com>
+
+Licensed under the terms of the GNU GPL 2.0. See LICENSE for more details.
+
+This program draws heavily on the following two pieces of software:
+
+    Airplayer
+    sonospy
