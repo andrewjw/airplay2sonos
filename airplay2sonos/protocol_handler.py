@@ -13,11 +13,10 @@
 
 import base64
 import BaseHTTPServer
-import logging
+import SocketServer
+import threading
 
 from apple_challenge import apple_challenge
-
-log = logging.getLogger('airplayer')
 
 class AirplayProtocolServer(object):
     def __init__(self, port, hwid):
@@ -26,14 +25,17 @@ class AirplayProtocolServer(object):
         self._hwid = hwid
 
     def start(self):
-        self._httpd = BaseHTTPServer.HTTPServer(("", self._port), AirplayProtocolHandler)
+        self._httpd = ThreadedHTTPServer(("", self._port), AirplayProtocolHandler)
         self._httpd.hwid = self._hwid
         self._httpd.serve_forever()
 
     def stop(self):
         self._httpd.shutdown()
 
-class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+    daemon_threads = True
+
+class AirplayProtocolHandler(SocketServer.ThreadingMixIn, BaseHTTPServer.BaseHTTPRequestHandler):
     def parse_request(self):
         print self.raw_requestline
         self.raw_requestline = self.raw_requestline.replace("RTSP/1.0", "HTTP/1.1")
@@ -96,3 +98,23 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write("%s %d %s\r\n" %
                              (self.protocol_version, code, message))
         self.send_header("CSeq", self.headers["CSeq"])
+
+    # From: http://blog.gocept.com/2011/08/04/shutting-down-an-httpserver/
+    _continue = True
+
+    def serve_forevere(self):
+        while self._continue:
+            self.handle_request()
+
+    def shutdown(self):
+        self._running = False
+        # We fire a last request at the server in order to take it out of the
+        # while loop in `self.serve_until_shutdown`.
+        try:
+            urllib2.urlopen(
+                'http://%s:%s/' % (self.server_name, self.server_port))
+        except urllib2.URLError:
+            # If the server is already shut down, we receive a socket error,
+            # which we ignore.
+            pass
+        self.server_close()

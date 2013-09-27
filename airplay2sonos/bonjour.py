@@ -22,26 +22,28 @@ DEVICE_INFO = {
     'srcvers' : '101.10'
 }
 
-def register_service(name, regtype, port):
-    def register_callback(sdRef, flags, errorCode, name, regtype, domain):
+class BonjourRegistration(object):
+    def __init__(self, name, regtype, port):
+        self.registered = True
+        self.record = pybonjour.TXTRecord(DEVICE_INFO)
+
+        self.service = pybonjour.DNSServiceRegister(name = name,
+                                            regtype = regtype,
+                                            port = port,
+                                            txtRecord = self.record,
+                                            callBack = self.callback)
+
+    def callback(self, sdRef, flags, errorCode, name, regtype, domain):
         print sdRef, flags, errorCode, name, regtype, domain
         if errorCode == pybonjour.kDNSServiceErr_NoError:
             print "Bonjour registration complete! %s.%s" % (name, regtype)
 
-    record = pybonjour.TXTRecord(DEVICE_INFO)
-
-    service = pybonjour.DNSServiceRegister(name = name,
-                                         regtype = regtype,
-                                         port = port,
-                                         txtRecord = record,
-                                         callBack = register_callback)
-
-    try:
-        while True:
-            ready = select.select([service], [], [])
-            if service in ready[0]:
-                pybonjour.DNSServiceProcessResult(service)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        service.close()
+    def register(self):
+        while self.registered:
+            ready = select.select([self.service], [], [])
+            if self.registered and self.service in ready[0]:
+                pybonjour.DNSServiceProcessResult(self.service)
+    
+    def stop(self):
+        self.registered = False
+        self.service.close()

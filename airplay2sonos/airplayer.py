@@ -12,6 +12,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+import signal
 import threading
 
 import bonjour
@@ -24,12 +25,20 @@ class Application(object):
         self.hwid = "".join([chr(random.randint(0, 256)) for _ in range(6)])
 
     def run(self):
+        signal.signal(signal.SIGINT, self.handle_signal)
+
         self._register_bonjour()
 
-        self._protocol_handler = AirplayProtocolServer(self._port, self.hwid)
-        threading.Thread(target=self._protocol_handler.start).start()
+        self._airplay_protocol_server = AirplayProtocolServer(self._port, self.hwid)
+        self._airplay_protocol_server.start()
 
     def _register_bonjour(self):
         hostname = "".join(["%02x" % ord(c) for c in self.hwid]) + "@Kitchen (Sonos)"
 
-        threading.Thread(target=bonjour.register_service, args=(hostname, "_raop._tcp", self._port,)).start()
+        self.bonjour = bonjour.BonjourRegistration(hostname, "_raop._tcp", self._port)
+
+        threading.Thread(target=self.bonjour.register).start()
+
+    def handle_signal(self, signum, frame):
+        self.bonjour.stop()
+        threading.Thread(target=self._airplay_protocol_server.stop).start()
