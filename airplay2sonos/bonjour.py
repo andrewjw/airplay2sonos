@@ -16,34 +16,46 @@ import pybonjour
 import logging
 
 DEVICE_INFO = {
-    'deviceid' : 'FF:FF:FF:FF:FF:FF',
-    'features' : '0x77',
-    'model' : 'AppleTV2,1',
-    'srcvers' : '101.10'
+    "txtvers": "1",
+    "ch": "2",
+    "cn": "0,1",
+    "ek": "1",
+    "et": "0,1",
+    "pw": "false",
+    "sm": "false",
+    "sv": "false",
+    "sr": "44100",
+    "ss": "16",
+    "tp": "TCP",
+    "vn": "3"
 }
 
 class BonjourRegistration(object):
     def __init__(self, name, regtype, port):
         self.registered = True
-        self.record = pybonjour.TXTRecord(DEVICE_INFO)
 
-        self.service = pybonjour.DNSServiceRegister(name = name,
-                                            regtype = regtype,
-                                            port = port,
-                                            txtRecord = self.record,
-                                            callBack = self.callback)
+        self.name = name
+        self.regtype = regtype
+        self.port = port
 
     def callback(self, sdRef, flags, errorCode, name, regtype, domain):
-        print sdRef, flags, errorCode, name, regtype, domain
         if errorCode == pybonjour.kDNSServiceErr_NoError:
             print "Bonjour registration complete! %s.%s" % (name, regtype)
 
     def register(self):
+        self.record = pybonjour.TXTRecord(DEVICE_INFO)
+
+        self.service = pybonjour.DNSServiceRegister(name = self.name,
+                                            regtype = self.regtype,
+                                            port = self.port,
+                                            txtRecord = self.record,
+                                            callBack = self.callback)
+
         while self.registered:
             ready = select.select([self.service], [], [])
             if self.registered and self.service in ready[0]:
                 pybonjour.DNSServiceProcessResult(self.service)
-    
+
     def stop(self):
         self.registered = False
         self.service.close()

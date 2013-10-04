@@ -32,10 +32,10 @@ class AirplayProtocolServer(object):
     def stop(self):
         self._httpd.shutdown()
 
-class ThreadedHTTPServer(SocketServer.ThreadingMixIn, BaseHTTPServer.HTTPServer):
+class ThreadedHTTPServer(BaseHTTPServer.HTTPServer):
     daemon_threads = True
 
-class AirplayProtocolHandler(SocketServer.ThreadingMixIn, BaseHTTPServer.BaseHTTPRequestHandler):
+class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def parse_request(self):
         print self.raw_requestline
         self.raw_requestline = self.raw_requestline.replace("RTSP/1.0", "HTTP/1.1")
@@ -53,13 +53,10 @@ class AirplayProtocolHandler(SocketServer.ThreadingMixIn, BaseHTTPServer.BaseHTT
         if "Apple-Challenge" in self.headers:
             self.send_header("Apple-Response", apple_challenge(self.headers["Apple-Challenge"], self.server.hwid))
 
-        #self.send_header("Server", "AirTunes/130.14")
         self.send_header("Audio-Jack-Status", "connected; type=analog")
         self.send_header("Public", "ANNOUNCE, SETUP, RECORD, PAUSE, FLUSH, TEARDOWN, OPTIONS, GET_PARAMETER, SET_PARAMETER")
-        
-        self.end_headers()
 
-        #self.wfile.write("\r\n")
+        self.end_headers()
 
     def do_GET(self):
         print self.headers
@@ -97,7 +94,8 @@ class AirplayProtocolHandler(SocketServer.ThreadingMixIn, BaseHTTPServer.BaseHTT
         if self.request_version != 'HTTP/0.9':
             self.wfile.write("%s %d %s\r\n" %
                              (self.protocol_version, code, message))
-        self.send_header("CSeq", self.headers["CSeq"])
+        if "CSeq" in self.headers:
+            self.send_header("CSeq", self.headers["CSeq"])
 
     # From: http://blog.gocept.com/2011/08/04/shutting-down-an-httpserver/
     _continue = True
