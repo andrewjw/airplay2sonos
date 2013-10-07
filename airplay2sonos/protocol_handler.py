@@ -96,6 +96,11 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header("Transport", "RTP/AVP/UDP;unicast;mode=record;server_port=%i;control_port=%i;timing_port=%i" % (server_port, control_port, timing_port))
         self.end_headers()
 
+    def do_RECORD(self):
+        self.send_response(200)
+        self.send_header("Audio-Latency", "0")
+        self.end_headers()
+
     def send_response(self, code, message=None):
         """Send the response header and log the response code.
 
