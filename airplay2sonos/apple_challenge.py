@@ -32,7 +32,6 @@ def apple_challenge(challenge, hwid):
     while value.endswith("="):
         value = value[:-1]
 
-    print value
     return value
 
 def ip_to_str():

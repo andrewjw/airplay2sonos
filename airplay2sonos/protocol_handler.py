@@ -24,8 +24,9 @@ class AirplayProtocolServer(object):
         self._port = port
         self._hwid = hwid
 
-    def start(self):
+    def start(self, airplayer):
         self._httpd = ThreadedHTTPServer(("", self._port), AirplayProtocolHandler)
+        self._httpd.airplayer = airplayer
         self._httpd.hwid = self._hwid
         self._httpd.serve_forever()
 
@@ -37,7 +38,6 @@ class ThreadedHTTPServer(BaseHTTPServer.HTTPServer):
 
 class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def parse_request(self):
-        print self.raw_requestline
         self.raw_requestline = self.raw_requestline.replace("RTSP/1.0", "HTTP/1.1")
 
         r = BaseHTTPServer.BaseHTTPRequestHandler.parse_request(self)
@@ -46,8 +46,6 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return r
 
     def do_OPTIONS(self):
-        print self.headers
-
         self.send_response(200)
 
         if "Apple-Challenge" in self.headers:
@@ -67,8 +65,25 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         print self.rfile.read()
 
     def do_ANNOUNCE(self):
-        print self.headers
-        print self.rfile.read(int(self.headers["Content-Length"]))
+        raw_attrs = self.rfile.read(int(self.headers["Content-Length"]))
+
+        attrs = {}
+        for line in raw_attrs.split("\n"):
+            if "=" not in line:
+                continue
+
+            key = line.split("=")[0]
+            value = "=".join(line.split("=")[1:]).strip()
+
+            if key == "a":
+                attrs[value.split(":")[0]] = ":".join(value.split(":")[1:])
+            else:
+                attrs[key] = value
+
+        self._id = self.server.airplayer.clients.new_client(attrs)
+
+        self.send_response(200)
+        self.end_headers()
 
     def do_SETUP(self):
         print self.headers

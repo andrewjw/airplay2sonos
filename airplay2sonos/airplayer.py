@@ -18,9 +18,13 @@ import threading
 import bonjour
 from protocol_handler import AirplayProtocolServer
 
+from clients import Clients
+
 class Application(object):
     def __init__(self, port):
         self._port = port
+
+        self.clients = Clients()
 
         self.hwid = "".join([chr(random.randint(0, 256)) for _ in range(6)])
 
@@ -30,7 +34,7 @@ class Application(object):
         self._register_bonjour()
 
         self._airplay_protocol_server = AirplayProtocolServer(self._port, self.hwid)
-        self._airplay_protocol_server.start()
+        self._airplay_protocol_server.start(self)
 
     def _register_bonjour(self):
         hostname = "".join(["%02x" % ord(c) for c in self.hwid]) + "@Kitchen (Sonos)"
