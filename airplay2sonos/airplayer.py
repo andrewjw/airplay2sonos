@@ -16,15 +16,17 @@ import signal
 import threading
 
 import bonjour
-from protocol_handler import AirplayProtocolServer
 
 from clients import Clients
+from data_endpoints import DataEndpoints
+from protocol_handler import AirplayProtocolServer
 
 class Application(object):
     def __init__(self, port):
         self._port = port
 
         self.clients = Clients()
+        self.endpoints = DataEndpoints(port)
 
         self.hwid = "".join([chr(random.randint(0, 256)) for _ in range(6)])
 
@@ -32,6 +34,8 @@ class Application(object):
         signal.signal(signal.SIGINT, self.handle_signal)
 
         self._register_bonjour()
+
+        threading.Thread(target=self.endpoints.handle).start()
 
         self._airplay_protocol_server = AirplayProtocolServer(self._port, self.hwid)
         self._airplay_protocol_server.start(self)
@@ -45,4 +49,5 @@ class Application(object):
 
     def handle_signal(self, signum, frame):
         self.bonjour.stop()
+        self.endpoints.stop()
         threading.Thread(target=self._airplay_protocol_server.stop).start()

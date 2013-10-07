@@ -80,19 +80,22 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             else:
                 attrs[key] = value
 
-        self._id = self.server.airplayer.clients.new_client(attrs)
+        self.client = self.server.airplayer.clients.new_client(attrs)
 
         self.send_response(200)
         self.end_headers()
 
     def do_SETUP(self):
-        print self.headers
-        print self.rfile.read()
+        self.client["transport"] = self.headers["Transport"]
 
-    def do_RECORD(self):
-        print self.headers
-        print self.rfile.read()
-        
+        server_port = self.server.airplayer.endpoints.open_socket("server", self.client)
+        control_port = self.server.airplayer.endpoints.open_socket("control", self.client)
+        timing_port = self.server.airplayer.endpoints.open_socket("timing", self.client)
+
+        self.send_response(200)
+        self.send_header("Transport", "RTP/AVP/UDP;unicast;mode=record;server_port=%i;control_port=%i;timing_port=%i" % (server_port, control_port, timing_port))
+        self.end_headers()
+
     def send_response(self, code, message=None):
         """Send the response header and log the response code.
 

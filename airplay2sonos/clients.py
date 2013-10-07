@@ -18,4 +18,4 @@ class Clients(object):
     def new_client(self, attrs):
         _id = len(self.clients)
         self.clients[_id] = attrs
-        return _id
+        return self.clients[_id]
