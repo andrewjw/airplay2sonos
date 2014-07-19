@@ -11,11 +11,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from client import Client
+
 class Clients(object):
     def __init__(self):
         self.clients = {}
 
     def new_client(self, attrs):
         _id = len(self.clients)
-        self.clients[_id] = attrs
+        self.clients[_id] = Client(attrs)
         return self.clients[_id]

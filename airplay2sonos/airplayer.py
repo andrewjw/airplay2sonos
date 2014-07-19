@@ -28,14 +28,16 @@ class Application(object):
         self.clients = Clients()
         self.endpoints = DataEndpoints(port)
 
-        self.hwid = "".join([chr(random.randint(0, 256)) for _ in range(6)])
+        self.hwid = "".join([chr(random.randint(0, 255)) for _ in range(6)])
 
     def run(self):
         signal.signal(signal.SIGINT, self.handle_signal)
 
         self._register_bonjour()
 
-        threading.Thread(target=self.endpoints.handle).start()
+        self.endpoint_thread = threading.Thread(target=self.endpoints.handle)
+        self.endpoint_thread.daemon = True
+        self.endpoint_thread.start()
 
         self._airplay_protocol_server = AirplayProtocolServer(self._port, self.hwid)
         self._airplay_protocol_server.start(self)

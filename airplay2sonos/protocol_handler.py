@@ -37,6 +37,8 @@ class ThreadedHTTPServer(BaseHTTPServer.HTTPServer):
     daemon_threads = True
 
 class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    wbufsize=4096
+
     def parse_request(self):
         self.raw_requestline = self.raw_requestline.replace("RTSP/1.0", "HTTP/1.1")
 
@@ -92,8 +94,11 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         control_port = self.server.airplayer.endpoints.open_socket("control", self.client)
         timing_port = self.server.airplayer.endpoints.open_socket("timing", self.client)
 
+        print server_port, control_port, timing_port
+
         self.send_response(200)
         self.send_header("Transport", "RTP/AVP/UDP;unicast;mode=record;server_port=%i;control_port=%i;timing_port=%i" % (server_port, control_port, timing_port))
+        self.send_header("Session", "1")
         self.end_headers()
 
     def do_RECORD(self):
@@ -101,13 +106,20 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.send_header("Audio-Latency", "0")
         self.end_headers()
 
+    def do_SET_PARAMETER(self):
+        print self.headers
+        content_length = int(self.headers["Content-Length"])
+        print self.rfile.read(content_length)
+
+        self.send_response(200)
+#        self.send_header("Audio-Latency", "0")
+        self.end_headers()
+
+    def do_FLUSH(self):
+        self.send_response(200)
+        self.end_headers()
+
     def send_response(self, code, message=None):
-        """Send the response header and log the response code.
-
-        Also send two standard headers with the server software
-        version and the current date.
-
-        """
         self.log_request(code)
         if message is None:
             if code in self.responses:
@@ -123,7 +135,7 @@ class AirplayProtocolHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     # From: http://blog.gocept.com/2011/08/04/shutting-down-an-httpserver/
     _continue = True
 
-    def serve_forevere(self):
+    def serve_forever(self):
         while self._continue:
             self.handle_request()
 
