@@ -14,6 +14,15 @@
 import struct
 import time
 
+class QTFFAtomMeta(type):
+    def __new__(cls, name, bases, attrs):
+        newattrs = {}
+
+        for attr in attrs:
+            if 
+
+        return super(QTFFAtomMeta, cls).__new__(cls, name, bases, newattrs)
+
 class M4AAtom(object):
     def __init__(self, atom, data):
         self.atom = atom
@@ -244,18 +253,19 @@ class ALAC(object):
         assert fmtp[0] == 96, "Format not Apple Lossless"
 
         self.blank = struct.pack("BBBBBB", 0, 0, 0, 0, 0, 0)
-        self.version = struct.pack(">H", 1)
+        self.version = struct.pack(">H", 0)
         self.revision = struct.pack(">H", 0)
-        self.vendor = struct.pack(">I", 0)
+        self.vendor = struct.pack(">I", 1)
+        self.mystery = struct.pack(">H", 0) # Not mentioned in spec, but in the files...
         self.channels = struct.pack(">H", fmtp[7])
         self.bit_depth = struct.pack(">H", fmtp[3])
         self.compression = struct.pack(">H", 0)
         self.packet = struct.pack(">H", 0)
         self.sample_rate = struct.pack(">HH", fmtp[11], 0)
-        self.samples_per_packet = struct.pack(">i", fmtp[1])
-        self.bytes_per_packet = struct.pack(">i", fmtp[1] * 2)
-        self.bytes_per_frame = struct.pack(">i", fmtp[9])
-        self.bytes_per_sample = struct.pack(">i", 2)
+        #self.samples_per_packet = struct.pack(">i", fmtp[1])
+        #self.bytes_per_packet = struct.pack(">i", fmtp[1] * 2)
+        #self.bytes_per_frame = struct.pack(">i", fmtp[9])
+        #self.bytes_per_sample = struct.pack(">i", 2)
         #self.version = struct.pack("B", 1)
         #self.pb = struct.pack("B", fmtp[4])
         #self.mb = struct.pack("B", fmtp[5])
